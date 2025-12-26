@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Membre;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Hash;
 
 class MembreController extends Controller
 {
@@ -11,27 +14,14 @@ class MembreController extends Controller
      */
     public function index()
     {
-        $membres = $this->membresData();
+        $membres = Membre::all();
 
-        // Calcul des statistiques affichées dans la vue
-        $total = count($membres);
-        $actifs = collect($membres)->where('statut', 'Actif')->count();
-        $baptises = collect($membres)->where('baptise', true)->count();
-        $currentYear = now()->year;
-        $nouveaux = collect($membres)->filter(function ($m) use ($currentYear) {
-            if (empty($m['date_adhesion'])) {
-                return false;
-            }
-            $parts = explode('/', $m['date_adhesion']);
-            $year = end($parts);
-            return (int) $year === (int) $currentYear;
-        })->count();
-
+        // Calcul des statistiques
         $stats = [
-            'total' => $total,
-            'actifs' => $actifs,
-            'baptises' => $baptises,
-            'nouveaux' => $nouveaux,
+            'total' => $membres->count(),
+            'actifs' => $membres->where('statut', 'actif')->count(),
+            'baptises' => $membres->where('baptise', true)->count(),
+            'nouveaux' => Membre::whereYear('created_at', now()->year)->count(),
         ];
 
         return view('backoffice.gestion-membre.membres-list', compact('membres', 'stats'));
@@ -51,7 +41,40 @@ class MembreController extends Controller
             'Accueil'
         ];
 
-        return view('backoffice.gestion-membre.membres.create', compact('ministeres'));
+        return view('backoffice.gestion-membre.create', compact('ministeres'));
+    }
+
+    /**
+     * Enregistrer un nouveau membre
+     */
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'nom_complet' => 'required|string|max:255',
+            'email' => 'required|email|unique:membres,email',
+            'telephone' => 'required|string|max:20',
+            'date_naissance' => 'nullable|date',
+            'ministere' => 'nullable|string|max:100',
+            'statut' => 'required|in:actif,inactif',
+            'adresse' => 'nullable|string',
+            'baptise' => 'boolean',
+            'mot_de_passe' => 'nullable|string|min:6',
+            'role' => 'required|in:superadmin,admin,pasteur,secretaire,membre',
+        ]);
+
+        $validated['uuid'] = (string) Str::uuid();
+        $validated['baptise'] = $request->has('baptise');
+        
+        if (!empty($validated['mot_de_passe'])) {
+            $validated['mot_de_passe'] = Hash::make($validated['mot_de_passe']);
+        } else {
+            unset($validated['mot_de_passe']);
+        }
+
+        Membre::create($validated);
+
+        return redirect()->route('backoffice.membres-list')
+            ->with('success', 'Membre ajouté avec succès !');
     }
 
     /**
@@ -59,17 +82,73 @@ class MembreController extends Controller
      */
     public function show($id)
     {
+        $membre = Membre::findOrFail($id);
+        return view('backoffice.gestion-membre.show', compact('membre'));
+    }
 
-        $membres = $this->membresData();
+    /**
+     * Afficher le formulaire d'édition
+     */
+    public function edit($id)
+    {
+        $membre = Membre::findOrFail($id);
+        
+        $ministeres = [
+            'Louange',
+            'Intercession',
+            'Jeunesse',
+            'Enseignement',
+            'Média',
+            'Accueil'
+        ];
 
-        // Trouver le membre par ID
-        $membre = collect($membres)->firstWhere('id', (int)$id);
+        return view('backoffice.gestion-membre.edit', compact('membre', 'ministeres'));
+    }
 
-        if (!$membre) {
-            abort(404, 'Membre non trouvé');
+    /**
+     * Mettre à jour un membre
+     */
+    public function update(Request $request, $id)
+    {
+        $membre = Membre::findOrFail($id);
+
+        $validated = $request->validate([
+            'nom_complet' => 'required|string|max:255',
+            'email' => 'required|email|unique:membres,email,' . $id,
+            'telephone' => 'required|string|max:20',
+            'date_naissance' => 'nullable|date',
+            'ministere' => 'nullable|string|max:100',
+            'statut' => 'required|in:actif,inactif',
+            'adresse' => 'nullable|string',
+            'baptise' => 'boolean',
+            'mot_de_passe' => 'nullable|string|min:6',
+            'role' => 'required|in:superadmin,admin,pasteur,secretaire,membre',
+        ]);
+
+        $validated['baptise'] = $request->has('baptise');
+        
+        if (!empty($validated['mot_de_passe'])) {
+            $validated['mot_de_passe'] = Hash::make($validated['mot_de_passe']);
+        } else {
+            unset($validated['mot_de_passe']);
         }
 
-        return view('backoffice.gestion-membre.show', compact('membre'));
+        $membre->update($validated);
+
+        return redirect()->route('backoffice.membres-list')
+            ->with('success', 'Membre modifié avec succès !');
+    }
+
+    /**
+     * Supprimer un membre (soft delete)
+     */
+    public function destroy($id)
+    {
+        $membre = Membre::findOrFail($id);
+        $membre->delete();
+
+        return redirect()->route('backoffice.membres-list')
+            ->with('success', 'Membre supprimé avec succès !');
     }
 
     /**
@@ -77,110 +156,15 @@ class MembreController extends Controller
      */
     public function dashboard()
     {
-        $membres = $this->membresData();
-        // prendre les 3 premiers comme aperçu
-        $previewMembres = array_slice($membres, 0, 3);
-        // Calcul des statistiques affichées dans la vue
-        $total = count($membres);
-        $actifs = collect($membres)->where('statut', 'Actif')->count();
-        $baptises = collect($membres)->where('baptise', true)->count();
-        $currentYear = now()->year;
-        $nouveaux = collect($membres)->filter(function ($m) use ($currentYear) {
-            if (empty($m['date_adhesion'])) {
-                return false;
-            }
-            $parts = explode('/', $m['date_adhesion']);
-            $year = end($parts);
-            return (int) $year === (int) $currentYear;
-        })->count();
-
+        $previewMembres = Membre::latest()->take(3)->get();
+        
         $stats = [
-            'total' => $total,
-            'actifs' => $actifs,
-            'baptises' => $baptises,
-            'nouveaux' => $nouveaux,
+            'total' => Membre::count(),
+            'actifs' => Membre::where('statut', 'actif')->count(),
+            'baptises' => Membre::where('baptise', true)->count(),
+            'nouveaux' => Membre::whereYear('created_at', now()->year)->count(),
         ];
-
 
         return view('backoffice.gestion-membre.dashboard', compact('previewMembres', 'stats'));
-    }
-
-    /**
-     * Données fictives centralisées pour les membres
-     */
-    protected function membresData()
-    {
-        return [
-            [
-                'id' => 1,
-                'nom' => 'Kaluba Sierra',
-                'email' => 'mustafabinamin@jiad.com',
-                'telephone' => '+242 06 1234 5678',
-                'ministere' => 'Louange',
-                'date_adhesion' => '15/01/2020',
-                'date_naissance' => '15/03/1985',
-                'statut' => 'Actif',
-                'baptise' => true,
-                'initiales' => 'KS',
-                'color' => 'bg-blue-600',
-                'adresse' => '12 Rue de la Paix, 75001 Paris'
-            ],
-            [
-                'id' => 2,
-                'nom' => 'Keran Koskunoblu',
-                'email' => 'woobie@woobie.com',
-                'telephone' => '+243 06 8765 4321',
-                'ministere' => 'Intercession',
-                'date_adhesion' => '20/06/2019',
-                'date_naissance' => '22/08/1990',
-                'statut' => 'Actif',
-                'baptise' => true,
-                'initiales' => 'KK',
-                'color' => 'bg-purple-600',
-                'adresse' => '45 Avenue des Champs, 75008 Paris'
-            ],
-            [
-                'id' => 3,
-                'nom' => 'Buddah',
-                'email' => 'Buddah@god.com',
-                'telephone' => '+243 06 1122 3344',
-                'ministere' => 'Jeunesse',
-                'date_adhesion' => '10/03/2021',
-                'date_naissance' => '05/12/1995',
-                'statut' => 'Actif',
-                'baptise' => true,
-                'initiales' => 'B',
-                'color' => 'bg-pink-600',
-                'adresse' => '78 Boulevard Saint-Michel, 75006 Paris'
-            ],
-            [
-                'id' => 4,
-                'nom' => 'Scpice',
-                'email' => 'ice@scpice.com',
-                'telephone' => '+243 06 4433 2211',
-                'ministere' => 'Enseignement',
-                'date_adhesion' => '05/11/2018',
-                'date_naissance' => '18/07/1988',
-                'statut' => 'Inactif',
-                'baptise' => true,
-                'initiales' => 'S',
-                'color' => 'bg-red-600',
-                'adresse' => '23 Rue de Rivoli, 75004 Paris'
-            ],
-            [
-                'id' => 5,
-                'nom' => 'Latto',
-                'email' => 'latto@oppai.com',
-                'telephone' => '+243 06 5566 7788',
-                'ministere' => 'Louange',
-                'date_adhesion' => '12/09/2022',
-                'date_naissance' => '30/01/1992',
-                'statut' => 'Actif',
-                'baptise' => true,
-                'initiales' => 'L',
-                'color' => 'bg-orange-600',
-                'adresse' => '56 Rue de la République, 69002 Lyon'
-            ],
-        ];
     }
 }

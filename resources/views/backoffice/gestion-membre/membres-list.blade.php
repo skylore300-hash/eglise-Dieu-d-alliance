@@ -4,6 +4,29 @@
 
 @section('content')
     <div class="min-h-screen p-6">
+        <!-- Messages de succès/erreur -->
+        @if(session('success'))
+            <div id="success-message" class="max-w-7xl mx-auto mb-4 bg-green-50 border-l-4 border-green-500 p-4 rounded-lg">
+                <div class="flex items-center">
+                    <svg class="w-6 h-6 text-green-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p class="text-green-700 font-medium">{{ session('success') }}</p>
+                </div>
+            </div>
+        @endif
+
+        @if(session('error'))
+            <div id="error-message" class="max-w-7xl mx-auto mb-4 bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
+                <div class="flex items-center">
+                    <svg class="w-6 h-6 text-red-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p class="text-red-700 font-medium">{{ session('error') }}</p>
+                </div>
+            </div>
+        @endif
+
         <!-- Header -->
         <div class="max-w-7xl mx-auto mb-8">
             <div class="flex items-center justify-between">
@@ -26,22 +49,42 @@
         <div class="max-w-7xl mx-auto">
             <!-- Filters -->
             <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
-                <div class="flex gap-4">
-                    <div class="flex-1 relative">
-                        <svg class="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" fill="none"
-                            stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="lg:col-span-2">
                         <input type="text" id="search-membres" placeholder="Rechercher par nom ou email..."
-                            class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            class="w-full pl-4 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                     </div>
-                    <select id="filter-status"
-                        class="px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white">
-                        <option value="all">Tous les statuts</option>
-                        <option value="Actif">Actif</option>
-                        <option value="Inactif">Inactif</option>
-                    </select>
+                    <div>
+                        <select id="filter-status"
+                            class="w-full pl-4 pr-10 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white cursor-pointer hover:border-gray-300 transition"
+                            style="background-position: right 1rem center;">
+                            <option value="all">Tous les statuts</option>
+                            <option value="actif">Actif</option>
+                            <option value="inactif">Inactif</option>
+                        </select>
+                    </div>
+                    <div>
+                        <select id="filter-ministere"
+                            class="w-full pl-4 pr-10 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white cursor-pointer hover:border-gray-300 transition"
+                            style="background-position: right 1rem center;">
+                            <option value="all">Tous les ministères</option>
+                            <option value="louange">Louange</option>
+                            <option value="intercession">Intercession</option>
+                            <option value="accueil">Accueil</option>
+                            <option value="multimedia">Multimédia</option>
+                            <option value="enfants">Enfants</option>
+                            <option value="jeunes">Jeunes</option>
+                        </select>
+                    </div>
+                    <div>
+                        <select id="filter-baptise"
+                            class="w-full pl-4 pr-10 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white cursor-pointer hover:border-gray-300 transition"
+                            style="background-position: right 1rem center;">
+                            <option value="all">Tous</option>
+                            <option value="1">Baptisés</option>
+                            <option value="0">Non baptisés</option>
+                        </select>
+                    </div>
                 </div>
             </div>
 
@@ -117,29 +160,35 @@
                 <!-- Table Header -->
                 <div class="bg-gray-50 border-b border-gray-200">
                     <div class="grid grid-cols-12 gap-4 px-6 py-4 text-sm font-semibold text-gray-600 uppercase">
-                        <div class="col-span-3">Nom</div>
+                        <div class="col-span-2">Nom</div>
                         <div class="col-span-3">Contact</div>
                         <div class="col-span-2">Ministère</div>
                         <div class="col-span-2">Date d'Adhésion</div>
                         <div class="col-span-1">Statut</div>
-                        <div class="col-span-1 text-center">Actions</div>
+                        <div class="col-span-2 text-center">Actions</div>
                     </div>
                 </div>
 
                 <!-- Table Body -->
                 <div class="divide-y divide-gray-200">
                     @foreach ($membres as $membre)
+                        @php
+                            $initiales = strtoupper(substr($membre->nom_complet, 0, 2));
+                            $colors = ['bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-red-500', 'bg-yellow-500', 'bg-indigo-500', 'bg-pink-500'];
+                            $color = $colors[$membre->id % count($colors)];
+                        @endphp
                         <div class="membre-row grid grid-cols-12 gap-4 px-6 py-4 items-center hover:bg-gray-50 transition"
-                            data-name="{{ $membre['nom'] }}" data-email="{{ $membre['email'] }}"
-                            data-status="{{ $membre['statut'] }}">
+                            data-name="{{ $membre->nom_complet }}" data-email="{{ $membre->email }}"
+                            data-status="{{ $membre->statut }}" data-ministere="{{ $membre->ministere ?? '' }}"
+                            data-baptise="{{ $membre->baptise ? '1' : '0' }}">
                             <!-- Nom -->
-                            <div class="col-span-3 flex items-center gap-3">
+                            <div class="col-span-2 flex items-center gap-3">
                                 <div
-                                    class="{{ $membre['color'] }} w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                                    {{ $membre['initiales'] }}
+                                    class="{{ $color }} w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                                    {{ $initiales }}
                                 </div>
-                                <div>
-                                    <p class="font-semibold text-gray-900">{{ $membre['nom'] }}</p>
+                                <div class="min-w-0">
+                                    <p class="font-semibold text-gray-900 truncate">{{ $membre->nom_complet }}</p>
                                     @if ($membre['baptise'])
                                         <div class="flex items-center gap-1 mt-1">
                                             <svg class="w-3 h-3 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
@@ -163,31 +212,31 @@
                             <div class="col-span-2">
                                 <span
                                     class="inline-flex px-3 py-1 rounded-full text-xs font-medium
-                                @if ($membre['ministere'] === 'Louange') bg-blue-100 text-blue-700
-                                @elseif($membre['ministere'] === 'Intercession') bg-purple-100 text-purple-700
-                                @elseif($membre['ministere'] === 'Jeunesse') bg-green-100 text-green-700
-                                @elseif($membre['ministere'] === 'Enseignement') bg-orange-100 text-orange-700 @endif">
-                                    {{ $membre['ministere'] }}
+                                @if ($membre->ministere === 'Louange') bg-blue-100 text-blue-700
+                                @elseif($membre->ministere === 'Intercession') bg-purple-100 text-purple-700
+                                @elseif($membre->ministere === 'Jeunesse') bg-green-100 text-green-700
+                                @elseif($membre->ministere === 'Enseignement') bg-orange-100 text-orange-700 @endif">
+                                    {{ $membre->ministere ?? 'N/A' }}
                                 </span>
                             </div>
 
                             <!-- Date d'Adhésion -->
                             <div class="col-span-2">
-                                <p class="text-gray-900 text-sm">{{ $membre['date_adhesion'] }}</p>
+                                <p class="text-gray-900 text-sm">{{ $membre->created_at ? $membre->created_at->format('d/m/Y') : 'N/A' }}</p>
                             </div>
 
                             <!-- Statut -->
                             <div class="col-span-1">
                                 <span
                                     class="inline-flex px-3 py-1 rounded-full text-xs font-medium
-                                @if ($membre['statut'] === 'Actif') bg-green-100 text-green-700
+                                @if ($membre->statut === 'actif') bg-green-100 text-green-700
                                 @else bg-gray-100 text-gray-700 @endif">
-                                    {{ $membre['statut'] }}
+                                    {{ ucfirst($membre->statut) }}
                                 </span>
                             </div>
 
                             <!-- Actions -->
-                            <div class="col-span-1 flex items-center justify-center gap-2">
+                            <div class="col-span-2 flex items-center justify-center gap-3">
                                 <button onclick='openViewModal(@json($membre))'
                                     class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition" title="Voir">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -224,7 +273,8 @@
         style="background-color: rgba(0, 0, 0, 0.15);">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-y-auto scrollbar-hide">
             <!-- Form -->
-            <form action="#" method="POST" class="p-5">
+            <form action="{{ route('membres.store') }}" method="POST" class="p-5">
+                @csrf
                 <!-- Header intégré -->
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="text-2xl font-bold text-blue-900">Nouveau Membre</h2>
@@ -238,50 +288,56 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <!-- Nom complet -->
                     <div>
-                        <label for="nom" class="block text-sm font-medium text-gray-700 mb-1">
+                        <label for="nom_complet" class="block text-sm font-medium text-gray-700 mb-1">
                             Nom complet <span class="text-red-500">*</span>
                         </label>
-                        <input type="text" id="nom" name="nom" required
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                        <input type="text" id="nom_complet" name="nom_complet" value="{{ old('nom_complet') }}" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm @error('nom_complet') border-red-500 @enderror"
                             placeholder="Entrez le nom complet">
+                        @error('nom_complet')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <!-- Email -->
                     <div>
-                        <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
+                        <label for="email" class="block text-sm font-medium text-gray-700 mb-1">
                             Email <span class="text-red-500">*</span>
                         </label>
-                        <input type="email" id="email" name="email" required
-                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        <input type="email" id="email" name="email" value="{{ old('email') }}" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm @error('email') border-red-500 @enderror"
                             placeholder="exemple@email.com">
+                        @error('email')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <!-- Téléphone -->
                     <div>
-                        <label for="telephone" class="block text-sm font-medium text-gray-700 mb-2">
+                        <label for="telephone" class="block text-sm font-medium text-gray-700 mb-1">
                             Téléphone <span class="text-red-500">*</span>
                         </label>
                         <input type="tel" id="telephone" name="telephone" required
-                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                             placeholder="+243 06 1234 5678">
                     </div>
 
                     <!-- Date de naissance -->
                     <div>
-                        <label for="date_naissance" class="block text-sm font-medium text-gray-700 mb-2">
+                        <label for="date_naissance" class="block text-sm font-medium text-gray-700 mb-1">
                             Date de naissance
                         </label>
                         <input type="date" id="date_naissance" name="date_naissance"
-                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
                     </div>
 
                     <!-- Ministère -->
                     <div>
-                        <label for="ministere" class="block text-sm font-medium text-gray-700 mb-2">
-                            Ministère <span class="text-red-500">*</span>
+                        <label for="ministere" class="block text-sm font-medium text-gray-700 mb-1">
+                            Ministère
                         </label>
-                        <select id="ministere" name="ministere" required
-                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white">
+                        <select id="ministere" name="ministere"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-sm">
                             <option value="">Sélectionnez un ministère</option>
                             <option value="Louange">Louange</option>
                             <option value="Intercession">Intercession</option>
@@ -294,23 +350,48 @@
 
                     <!-- Statut -->
                     <div>
-                        <label for="statut" class="block text-sm font-medium text-gray-700 mb-2">
+                        <label for="statut" class="block text-sm font-medium text-gray-700 mb-1">
                             Statut <span class="text-red-500">*</span>
                         </label>
                         <select id="statut" name="statut" required
-                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white">
-                            <option value="Actif">Actif</option>
-                            <option value="Inactif">Inactif</option>
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-sm">
+                            <option value="actif">Actif</option>
+                            <option value="inactif">Inactif</option>
                         </select>
+                    </div>
+
+                    <!-- Role -->
+                    <div>
+                        <label for="role" class="block text-sm font-medium text-gray-700 mb-1">
+                            Rôle <span class="text-red-500">*</span>
+                        </label>
+                        <select id="role" name="role" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-sm">
+                            <option value="membre">Membre</option>
+                            <option value="secretaire">Secrétaire</option>
+                            <option value="pasteur">Pasteur</option>
+                            <option value="admin">Admin</option>
+                            <option value="superadmin">Super Admin</option>
+                        </select>
+                    </div>
+
+                    <!-- Mot de passe -->
+                    <div>
+                        <label for="mot_de_passe" class="block text-sm font-medium text-gray-700 mb-1">
+                            Mot de passe
+                        </label>
+                        <input type="password" id="mot_de_passe" name="mot_de_passe"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                            placeholder="Laisser vide si non nécessaire">
                     </div>
 
                     <!-- Adresse -->
                     <div class="md:col-span-2">
-                        <label for="adresse" class="block text-sm font-medium text-gray-700 mb-2">
+                        <label for="adresse" class="block text-sm font-medium text-gray-700 mb-1">
                             Adresse
                         </label>
-                        <textarea id="adresse" name="adresse" rows="4"
-                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                        <textarea id="adresse" name="adresse" rows="3"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-sm"
                             placeholder="Entrez l'adresse complète"></textarea>
                     </div>
 
@@ -318,20 +399,20 @@
                     <div class="md:col-span-2">
                         <label class="flex items-center cursor-pointer">
                             <input type="checkbox" id="baptise" name="baptise" value="1"
-                                class="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500">
-                            <span class="ml-3 text-sm font-medium text-gray-700">Baptisé</span>
+                                class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500">
+                            <span class="ml-2 text-sm font-medium text-gray-700">Baptisé</span>
                         </label>
                     </div>
                 </div>
 
                 <!-- Buttons -->
-                <div class="flex items-center justify-end gap-4 mt-8 pt-6 border-t border-gray-200">
+                <div class="flex items-center justify-end gap-4 mt-6 pt-4 border-t border-gray-200">
                     <button type="button" onclick="closeModal()"
-                        class="px-6 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition font-medium">
+                        class="px-6 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition font-medium text-sm">
                         Annuler
                     </button>
                     <button type="submit"
-                        class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium">
+                        class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium text-sm">
                         Enregistrer
                     </button>
                 </div>
@@ -345,7 +426,9 @@
         style="background-color: rgba(0, 0, 0, 0.15);">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-y-auto scrollbar-hide">
             <!-- Form -->
-            <form action="#" method="POST" class="p-5">
+            <form id="edit-form" action="" method="POST" class="p-5">
+                @csrf
+                @method('PUT')
                 <!-- Header intégré -->
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="text-2xl font-bold text-blue-900">Modifier le Membre</h2>
@@ -364,7 +447,7 @@
                         <label for="edit-nom" class="block text-sm font-medium text-gray-700 mb-1">
                             Nom complet <span class="text-red-500">*</span>
                         </label>
-                        <input type="text" id="edit-nom" name="nom" required
+                        <input type="text" id="edit-nom" name="nom_complet" required
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
                     </div>
 
@@ -419,8 +502,23 @@
                         </label>
                         <select id="edit-statut" name="statut" required
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-sm">
-                            <option value="Actif">Actif</option>
-                            <option value="Inactif">Inactif</option>
+                            <option value="actif">Actif</option>
+                            <option value="inactif">Inactif</option>
+                        </select>
+                    </div>
+
+                    <!-- Role -->
+                    <div>
+                        <label for="edit-role" class="block text-sm font-medium text-gray-700 mb-1">
+                            Rôle <span class="text-red-500">*</span>
+                        </label>
+                        <select id="edit-role" name="role" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-sm">
+                            <option value="membre">Membre</option>
+                            <option value="secretaire">Secrétaire</option>
+                            <option value="pasteur">Pasteur</option>
+                            <option value="admin">Admin</option>
+                            <option value="superadmin">Super Admin</option>
                         </select>
                     </div>
 
@@ -567,21 +665,34 @@
                     class="font-semibold text-gray-900"></span> ? Cette action est irréversible.
             </p>
 
-            <!-- Buttons -->
-            <div class="flex gap-3">
-                <button type="button" onclick="closeDeleteModal()"
-                    class="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-medium">
-                    Annuler
-                </button>
-                <button type="button" onclick="confirmDelete()"
-                    class="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium">
+            <!-- Form pour la suppression -->
+            <form id="delete-form" action="" method="POST">
+                @csrf
+                @method('DELETE')
+                
+                <!-- Buttons -->
+                <div class="flex gap-3">
+                    <button type="button" onclick="closeDeleteModal()"
+                        class="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-medium">
+                        Annuler
+                    </button>
+                    <button type="submit"
+                        class="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium">
                     Supprimer
                 </button>
-            </div>
+                </div>
+            </form>
         </div>
     </div>
 
     <script>
+        // Ouvrir automatiquement le modal s'il y a des erreurs de validation
+        @if($errors->any())
+            window.addEventListener('DOMContentLoaded', function() {
+                openModal();
+            });
+        @endif
+
         function openModal() {
             document.getElementById('modal-nouveau-membre').classList.remove('hidden');
             document.body.style.overflow = 'hidden';
@@ -593,12 +704,18 @@
         }
 
         function openEditModal(membre) {
+            // Définir l'action du formulaire
+            const form = document.getElementById('edit-form');
+            form.action = `/backoffice/gestion-membre/${membre.id}`;
+            
             // Remplir le formulaire avec les données du membre
-            document.getElementById('edit-nom').value = membre.nom;
+            document.getElementById('edit-nom').value = membre.nom_complet || membre.nom;
             document.getElementById('edit-email').value = membre.email;
             document.getElementById('edit-telephone').value = membre.telephone;
-            document.getElementById('edit-ministere').value = membre.ministere;
-            document.getElementById('edit-statut').value = membre.statut;
+            document.getElementById('edit-date_naissance').value = membre.date_naissance || '';
+            document.getElementById('edit-ministere').value = membre.ministere || '';
+            document.getElementById('edit-statut').value = membre.statut.toLowerCase();
+            document.getElementById('edit-role').value = membre.role || 'membre';
             document.getElementById('edit-adresse').value = membre.adresse || '';
             document.getElementById('edit-baptise').checked = membre.baptise;
 
@@ -616,26 +733,44 @@
         let currentMembre = null;
 
         function openViewModal(membre) {
+            console.log('openViewModal appelé avec:', membre);
             currentMembre = membre;
 
             // Remplir les informations
-            document.getElementById('view-nom').textContent = membre.nom;
-            document.getElementById('view-email').textContent = membre.email;
-            document.getElementById('view-telephone').textContent = membre.telephone;
-            document.getElementById('view-ministere').textContent = membre.ministere;
-            document.getElementById('view-date-adhesion').textContent = membre.date_adhesion;
-            document.getElementById('view-date-naissance').textContent = membre.date_naissance || 'Non renseigné';
-            document.getElementById('view-adresse').textContent = membre.adresse || 'Non renseigné';
+            document.getElementById('view-nom').textContent = membre.nom_complet || membre.nom || '';
+            document.getElementById('view-email').textContent = membre.email || '';
+            document.getElementById('view-telephone').textContent = membre.telephone || '';
+            document.getElementById('view-ministere').textContent = membre.ministere || 'Non spécifié';
+            
+            // Formater la date d'adhésion (created_at)
+            let dateAdhesion = 'Non spécifié';
+            if (membre.created_at) {
+                const date = new Date(membre.created_at);
+                dateAdhesion = date.toLocaleDateString('fr-FR');
+            }
+            document.getElementById('view-date-adhesion').textContent = dateAdhesion;
+            
+            // Formater la date de naissance
+            let dateNaissance = 'Non spécifié';
+            if (membre.date_naissance) {
+                const date = new Date(membre.date_naissance);
+                dateNaissance = date.toLocaleDateString('fr-FR');
+            }
+            document.getElementById('view-date-naissance').textContent = dateNaissance;
+            
+            document.getElementById('view-adresse').textContent = membre.adresse || 'Non spécifié';
 
             // Avatar
             const avatar = document.getElementById('view-avatar');
-            avatar.className =
-                `w-20 h-20 ${membre.color} rounded-full flex items-center justify-center text-white text-2xl font-bold flex-shrink-0`;
-            avatar.textContent = membre.initiales;
+            const initiales = (membre.nom_complet || membre.nom || '?').substring(0, 2).toUpperCase();
+            const colors = ['bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-red-500', 'bg-yellow-500', 'bg-indigo-500', 'bg-pink-500'];
+            const color = colors[membre.id % colors.length];
+            avatar.className = `w-20 h-20 ${color} rounded-full flex items-center justify-center text-white text-2xl font-bold flex-shrink-0`;
+            avatar.textContent = initiales;
 
             // Statut badge
             const statutBadge = document.getElementById('view-statut-badge');
-            if (membre.statut === 'Actif') {
+            if (membre.statut === 'actif' || membre.statut === 'Actif') {
                 statutBadge.className = 'px-3 py-1 bg-green-50 text-green-600 rounded-full text-sm font-medium';
                 statutBadge.textContent = 'Actif';
             } else {
@@ -663,15 +798,28 @@
         }
 
         function openEditFromView() {
+            console.log('openEditFromView appelé', currentMembre);
             if (currentMembre) {
+                const membre = currentMembre; // Sauvegarder avant de fermer le modal
                 closeViewModal();
-                openEditModal(currentMembre);
+                setTimeout(() => {
+                    console.log('Ouverture du modal d\'édition avec:', membre);
+                    openEditModal(membre);
+                }, 150);
+            } else {
+                console.error('currentMembre est null ou undefined');
             }
         }
 
         function openDeleteModal(membre) {
             membreToDelete = membre;
-            document.getElementById('delete-membre-nom').textContent = membre.nom;
+            document.getElementById('delete-membre-nom').textContent = membre.nom_complet || membre.nom;
+            
+            // Mettre à jour l'action du formulaire de suppression
+            const deleteForm = document.getElementById('delete-form');
+            if (deleteForm) {
+                deleteForm.action = `/backoffice/gestion-membre/${membre.id}`;
+            }
             document.getElementById('modal-supprimer-membre').classList.remove('hidden');
             document.body.style.overflow = 'hidden';
         }
@@ -682,13 +830,7 @@
             membreToDelete = null;
         }
 
-        function confirmDelete() {
-            if (membreToDelete) {
-                console.log('Suppression du membre:', membreToDelete);
-                // Ici vous pourrez ajouter l'appel AJAX pour supprimer du backend
-                closeDeleteModal();
-            }
-        }
+        // La suppression se fait maintenant via la soumission du formulaire delete-form
 
         // Fermer le modal de création en cliquant en dehors
         document.getElementById('modal-nouveau-membre').addEventListener('click', function(e) {
@@ -718,6 +860,40 @@
             }
         });
 
+        // Fonction de filtrage des membres
+        function filterMembers() {
+            const searchValue = document.getElementById('search-membres').value.toLowerCase();
+            const statusValue = document.getElementById('filter-status').value.toLowerCase();
+            const ministereValue = document.getElementById('filter-ministere').value.toLowerCase();
+            const baptiseValue = document.getElementById('filter-baptise').value;
+            const rows = document.querySelectorAll('.membre-row');
+
+            rows.forEach(row => {
+                const name = row.getAttribute('data-name').toLowerCase();
+                const email = row.getAttribute('data-email').toLowerCase();
+                const status = row.getAttribute('data-status').toLowerCase();
+                const ministere = row.getAttribute('data-ministere').toLowerCase();
+                const baptise = row.getAttribute('data-baptise');
+
+                const matchesSearch = name.includes(searchValue) || email.includes(searchValue);
+                const matchesStatus = statusValue === 'all' || status === statusValue;
+                const matchesMinistere = ministereValue === 'all' || ministere === ministereValue;
+                const matchesBaptise = baptiseValue === 'all' || baptise === baptiseValue;
+
+                if (matchesSearch && matchesStatus && matchesMinistere && matchesBaptise) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+
+        // Écouter les événements de filtrage
+        document.getElementById('search-membres').addEventListener('input', filterMembers);
+        document.getElementById('filter-status').addEventListener('change', filterMembers);
+        document.getElementById('filter-ministere').addEventListener('change', filterMembers);
+        document.getElementById('filter-baptise').addEventListener('change', filterMembers);
+
         // Fermer avec la touche Échap
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
@@ -727,5 +903,23 @@
                 closeViewModal();
             }
         });
+
+        // Auto-masquer les messages après 5 secondes
+        setTimeout(function() {
+            const successMessage = document.getElementById('success-message');
+            const errorMessage = document.getElementById('error-message');
+            
+            if (successMessage) {
+                successMessage.style.transition = 'opacity 0.5s';
+                successMessage.style.opacity = '0';
+                setTimeout(() => successMessage.remove(), 500);
+            }
+            
+            if (errorMessage) {
+                errorMessage.style.transition = 'opacity 0.5s';
+                errorMessage.style.opacity = '0';
+                setTimeout(() => errorMessage.remove(), 500);
+            }
+        }, 5000);
     </script>
 @endsection
