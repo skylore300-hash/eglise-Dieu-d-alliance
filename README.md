@@ -111,3 +111,29 @@ pour le moment on a juste une table : membre qui contient ces champs :
 **php artisan serve**
 
 si vous avez des erreurs après ça, **ecrire dans le groupe**
+
+## contenu du gitignore
+```*.log```
+```.DS_Store```
+```.env```
+```.env.backup```
+```.env.production```
+```.phpactor.json```
+```.phpunit.result.cache```
+```/.fleet```
+```/.idea```
+```/.nova```
+```/.phpunit.cache```
+```/.vscode```
+```/.zed```
+```/auth.json```
+```/node_modules```
+```/public/build```
+```/public/hot```
+```/public/storage```
+```/storage/*.key```
+```/storage/pail```
+```/vendor```
+```Homestead.json```
+```Homestead.yaml```
+```Thumbs.db```
