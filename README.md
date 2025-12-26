@@ -81,3 +81,33 @@ Ensuite, créez une **Pull Request** sur GitHub pour fusionner votre branche dan
 
 ## ☣️ Attention
 Vous devais respecter les etapes avant d'initialiser le projet, sinon ça ne va pas fonctionner
+
+
+## Structure de la base de données
+pour le moment on a juste une table : membre qui contient ces champs :
+- id (uuid)
+- nom_complet
+- email
+- telephone
+- date_naissance
+- ministere
+- statut (enum : actif/inactif)
+- adresse
+- baptise
+- mot_de_passe
+- role (enum: 'superadmin','admin','pasteur','secretaire','membre')
+- et les autres champs par defauts
+
+## Comment faire la config
+**Lancer laragon / Xampp**
+**modifier ces champs dans .env :**
+```DB_CONNECTION=mysql```
+```DB_HOST=127.0.0.1```
+```DB_PORT=3306```
+```DB_DATABASE=eglise_db```
+```DB_USERNAME=root```
+```DB_PASSWORD=vide```
+
+**php artisan serve**
+
+si vous avez des erreurs après ça, **ecrire dans le groupe**
